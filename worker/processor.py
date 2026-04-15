@@ -10,11 +10,17 @@ import json
 
 def process_job(db: Session, job_data: dict, metrics: dict = None):
     job_id = job_data["job_id"]
-    file_path = job_data.get("file_path", "")
     
     try:
         # Update job status to processing
         job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            raise ValueError(f"Job {job_id} not found")
+
+        # Use DB values as source of truth; Kafka payload may not include all fields.
+        file_path = job.file_path or job_data.get("file_path", "")
+        image_paths = job.image_paths or []
+
         job.status = "PROCESSING"
         db.commit()
         
@@ -39,8 +45,8 @@ def process_job(db: Session, job_data: dict, metrics: dict = None):
                 text_content = "DOCX parsing not yet implemented"
         
         # If no document, create context from images
-        if not text_content and job.image_paths:
-            text_content = f"Generate UI test cases for {len(job.image_paths)} user interface screenshot(s). " \
+        if not text_content and image_paths:
+            text_content = f"Generate UI test cases for {len(image_paths)} user interface screenshot(s). " \
                           f"Focus on visual elements, user interactions, layout validation, and responsive design testing."
         
         # If still no content, use generic
@@ -51,7 +57,7 @@ def process_job(db: Session, job_data: dict, metrics: dict = None):
         import worker.llm
         import importlib
         importlib.reload(worker.llm)
-        test_cases = worker.llm.generate_test_cases(text_content, job.image_paths or [], metrics)
+        test_cases = worker.llm.generate_test_cases(text_content, image_paths, metrics)
         
         # Save test cases to database
         for tc_data in test_cases:

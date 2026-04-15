@@ -66,11 +66,13 @@ backend/
 
 ### Prerequisites
 
-- Python 3.10 or higher
+- Python 3.11 (recommended, installed via Homebrew on macOS)
 - PostgreSQL running on `localhost:5432`
 - Kafka running on `localhost:19093`
 - MinIO running on `localhost:9000`
 - OpenRouter API key ([get one here](https://openrouter.ai/))
+
+> **Important**: Python 3.14 has compatibility issues with some dependencies. Use Python 3.11.
 
 > **Note**: All infrastructure services are typically started using the [infrastructure](https://github.com/AI-based-Test-Case-Generation/infrastructure) repository.
 
@@ -81,13 +83,41 @@ git clone https://github.com/AI-based-Test-Case-Generation/backend.git
 cd backend
 ```
 
-### 2. Install Dependencies
+### 2. Set Up Virtual Environment
+
+> **Important**: Python 3.14 has compatibility issues with some dependencies. Use Python 3.11 instead.
+
+**Install Python 3.11 (via Homebrew on macOS):**
+```bash
+brew install python@3.11
+```
+
+**Create and activate virtual environment:**
+```bash
+# Create virtual environment with Python 3.11
+python3.11 -m venv .venv
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Your prompt should now show: (.venv)
+```
+
+**To deactivate later:**
+```bash
+deactivate
+```
+
+### 3. Install Dependencies
+
+> **Note**: The installed packages take approximately **115 MB** of disk space.
 
 ```bash
+# Make sure your virtual environment is activated first
 pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
+### 4. Configure Environment
 
 Create a `.env` file:
 
@@ -116,13 +146,15 @@ OPENROUTER_API_KEY=sk-or-v1-your-key-here
 USE_LLM=true
 ```
 
-### 4. Initialize Database
+### 5. Initialize Database
 
 ```bash
-python migrate_db.py
+python init_db.py
 ```
 
-### 5. Start the API Server
+> **Note**: This creates the `jobs` and `test_cases` tables. The `migrate_db.py` script is only for adding columns to existing tables.
+
+### 6. Start the API Server
 
 ```bash
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
@@ -256,6 +288,12 @@ Open http://localhost:8000/docs in your browser for Swagger UI with interactive 
 | `USE_LLM` | Enable LLM for test generation | `true` |
 
 ## 🛠️ Development
+
+> **Tip**: Use helper scripts from the project root for easier workflow:
+> - `../start.sh` - Start all infrastructure services and initialize database
+> - `../stop.sh` - Stop all Docker services
+> - `../status.sh` - Check health of all services
+> - `../setup-minio.sh` - Setup MinIO bucket if needed
 
 ### Code Structure
 

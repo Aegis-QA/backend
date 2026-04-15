@@ -17,9 +17,14 @@ def generate_test_cases_with_llm(text_content: str, image_paths: list = None, me
     Supports both document-based and image-based test case generation
     """
     try:
+        if not OPENROUTER_API_KEY:
+            print("⚠️ OPENROUTER_API_KEY is not set. Falling back to rule-based generation.")
+            return None
+
         client = OpenAI(
             base_url="https://openrouter.ai/api/v1",
             api_key=OPENROUTER_API_KEY,
+            timeout=45.0,
         )
         
         # Different prompts for different scenarios
@@ -159,7 +164,8 @@ Return ONLY valid JSON array, no additional text."""
             model=model,
             messages=messages,
             temperature=0.7,
-            max_tokens=2000
+            max_tokens=2000,
+            timeout=45.0,
         )
         
         response_text = completion.choices[0].message.content.strip()
